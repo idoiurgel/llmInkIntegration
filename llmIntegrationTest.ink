@@ -1,100 +1,65 @@
-# gptcontext: Du bist ein erfahrener Reiseführer, der den Spieler durch eine geheimnisvolle Welt begleitet. Du hilfst mit klugen, kurzen Entscheidungen in Form von Zahlen (z. B. 0 oder 1). Wenn du den Spieler nicht verstehst, fragst du nach.
+VAR openness = 0
 
--> start
+# gptcontext: Du bist ein nachdenklicher Gesprächspartner, der dem Spieler hilft, seine eigenen Überzeugungen zu hinterfragen. Du gibst keine Meinung ab, sondern unterstützt beim Reflektieren. Wenn der Spieler eine Aussage macht, hilfst du ihm, sie einzuordnen, und wählst eine passende Reaktion aus den gegebenen Optionen. Falls du verstehst, welche Option der Benutzer wählen möchte, dann antwortetst du mit der Zahl der Option, also 0, 1, 2, usw. und sonst nichts. Du sagst auch nicht (0) mit Klammern, sondern nur 0, ohne Klammern, und entsprechend für alle Optionen. FAlls du aus der Eingabe des Benutzers nicht herausfinden kannst, welche Option er meint, dann versuche ihn vorsichtig dahin zu lenken und zu erklären, was der unterschied der beiden Optionen ist
 
-=== start
--> kreuzung_1
+-> intro
 
-=== kreuzung_1
+=== intro
 # gpt:on
 # choices:on
-# gptprompt: Du bist ein erfahrener Reiseführer. Hilf dem Spieler, sich zwischen Sicherheit (Dorf) und Abenteuer (Berg) zu entscheiden. Du bekommst die Information, welche die Optionen sind. Du antwortest mit einer Zahl, z.B. 0 oder 1, wenn du verstehst, welche Option am besten für der Nutzer ist. Wenn du nicht verstehst, fragst du nach.
-Du stehst an einer Kreuzung. Vor dir liegt ein nebliger Bergpfad, hinter dir das Dorf.
+# gptprompt: Du reagierst auf eine historische Information, die moralisch und emotional komplex ist. Wähle eine passende Reaktion für den Spieler.
+Du liest einen Artikel über George Washingtons Zähne. Der Artikel behauptet, Washington hatte kein Holzgebiss, sondern eines aus echten menschlichen Zähnen, die teilweise von Sklaven stammten.
 
-* Gehe ins Dorf -> dorf_zurueck
-* Geh den Berg hinauf -> berg_hoch
+Wie reagierst du?
 
-=== dorf_zurueck
++ [Das überrascht mich, aber ich akzeptiere die Information.]
+    ~ openness += 1
+    -> openness_check
+
++ [Das klingt falsch. Das glaube ich nicht.]
+    ~ openness -= 1
+    -> openness_check
+
+=== openness_check
+{ openness > 0:
+    Du akzeptierst die neue Information, auch wenn sie dir unangenehm ist.
+    -> second_fact
+- else:
+    Du spürst eine innere Ablehnung gegen die neue Information. Dein Gehirn verteidigt sich emotional.
+    -> second_fact
+}
+
+=== second_fact
 # gpt:on
 # choices:on
-Du drehst dich um und gehst zurück ins Dorf.
+# gptprompt: Du reflektierst über psychologische Prozesse. Der Spieler soll erkennen, ob er sich selbst wiedererkennt oder sich verteidigt.
+Der Artikel präsentiert nun eine weitere Information: „Wusstest du, dass Menschen, wenn sie mit Fakten konfrontiert werden, die ihren Überzeugungen widersprechen, diese oft sogar stärker verteidigen?“
 
--> geisterwald
+Wie reagierst du darauf?
 
-=== berg_hoch
-# gpt:on
-# choices:on
-Du wählst den Weg in den Nebel.
++ [Interessant. Ich werde versuchen, offen dafür zu sein.]
+    ~ openness += 1
+    -> self_reflection
 
--> geisterwald
++ [Jetzt fühle ich mich noch stärker angegriffen!]
+    ~ openness -= 1
+    -> self_reflection
 
-=== geisterwald
-# gpt:on
-# choices:on
-# gptprompt: Der Wald wirkt unheimlich. Du musst entscheiden, ob du deinen Mut sammelst oder dich lieber zurückziehst.
-Ein geisterhafter Wald liegt vor dir.
-
-* In den Wald -> wald_rein
-* Weg vom Wald -> wald_weg
-
-=== wald_rein
+=== self_reflection
 # gpt:on
 # choices:off
-# gptprompt: Du betrittst den dunklen Wald. Was willst du tun – leise voranschleichen oder laut deinen Namen rufen?
-Die Äste knacken unter deinen Füßen. Es ist still. Zu still.
+# gptprompt: Der Spieler wurde mehrfach mit kognitiv dissonanten Informationen konfrontiert. Frag ihn in freundlichem Ton, wie es ihm geht oder was er darüber denkt.
+Wie fühlst du dich nach diesen Gedanken?
 
--> tempel_odyssee
++[Benutzer hat etwas zu seinen Gefühlen oder Gedanken gesagt.]
+-> conclusion
 
-=== wald_weg
+=== conclusion
 # gpt:off
-# choices:on
-Du weichst zurück vom Wald.
-
-* Zurück zur Kreuzung -> kreuzung_1
-
-=== tempel_odyssee
-# gpt:on
-# choices:on
-# gptprompt: Du stehst nun vor zwei Wegen: Einer führt in einen alten Tempel, der andere tiefer in die Wildnis. Was ist weiser?
-Ein verfallener Tempel liegt links, rechts ein Trampelpfad ins Dickicht.
-
-* Tempel betreten -> tempel_betreten
-* Pfad folgen -> tiefer_wald
-
-=== tempel_betreten
-# gpt:off
-# choices:on
-Du schiebst das schwere Steintor auf.
-
-* Weiter → -> finale
-* Zurück → -> geisterwald
-
-=== tiefer_wald
-# gpt:on
-# choices:on
-# gptprompt: Du bist nun tief in der Wildnis. Der Spieler fühlt sich beobachtet. Soll er sich verstecken oder laut um Hilfe rufen?
-Büsche rascheln. Augen starren dich aus dem Dunkel an.
-
-* Verstecken -> verstecken
-* Rufen -> rufen
-
-=== verstecken
-# gpt:off
-# choices:off
-Du kauerst dich ins Unterholz. Alles wird still.
-
--> finale
-
-=== rufen
-# gpt:off
-# choices:off
-Dein Ruf hallt durch die Bäume – keine Antwort.
-
--> finale
-
-=== finale
-# gpt:off
-# choices:off
-Ein Licht erscheint am Horizont. Dein Abenteuer endet hier – für den Moment.
-
--> END
+{ openness >= 1:
+    Am Ende erkennst du, dass du – wie jeder Mensch – anfällig für den Backfire-Effekt bist. Du beschließt, ab jetzt achtsamer und offener gegenüber neuen Fakten zu sein.
+    -> END
+- else:
+    Du hast gemerkt, wie stark dein Widerstand gegen neue Informationen sein kann. Vielleicht denkst du später noch einmal darüber nach?
+    -> END
+}

@@ -5,6 +5,7 @@ let currentGptNode = null;
 let gptEnabled = true;
 let inkChoicesEnabled = true;
 let currentGptPromptHint = "";
+let globalGptContext = "";
 let openaiApiKey = ""; // wird geladen aus apikey.txt
 const gptModel = "gpt-4-turbo";
 
@@ -20,6 +21,17 @@ fetch('story.json')
   .then(response => response.json())
   .then(json => {
     story = new inkjs.Story(json);
+
+    // Hole globalen gptcontext aus den globalTags (einmalig)
+    const globalTags = story.globalTags || [];
+    globalTags.forEach(tag => {
+      const cleanTag = tag.trim().toLowerCase();
+      if (cleanTag.startsWith("gptcontext:")) {
+        globalGptContext = tag.substring("gptcontext:".length).trim();
+        console.log("🌍 Globaler GPT-Kontext erkannt:", globalGptContext);
+      }
+    });
+
     continueStory();
   });
 
@@ -111,6 +123,12 @@ async function handleUserInput() {
   console.log("📨 Benutzereingabe:", input);
   document.getElementById("userInput").value = "";
 
+  // Eingabe des Nutzers dauerhaft anzeigen
+  const userParagraph = document.createElement("p");
+  userParagraph.classList.add("user-input");
+  userParagraph.textContent = `🗣️ Du: ${input}`;
+  document.getElementById("story").appendChild(userParagraph);
+
   const result = await askGPTForChoiceIndex(input);
   console.log("🧠 GPT Ergebnis:", result);
 
@@ -130,9 +148,9 @@ async function handleUserInput() {
 async function askGPTForChoiceIndex(input) {
   const choices = story.currentChoices.map((c, i) => `(${i}): ${c.text}`).join("\n");
 
-  const prompt = `${currentGptPromptHint}\n\nDer Spieler sagt: "${input}"\n\nHier sind die Optionen:\n${choices}\n\nWähle die passende Zahl.`;
+  const fullPrompt = `${globalGptContext}\n\n${currentGptPromptHint}\n\nDer Spieler sagt: "${input}"\n\nHier sind die Optionen:\n${choices}\n\nWähle die passende Zahl.`;
 
-  console.log("📤 Sende Prompt an GPT direkt:", prompt);
+  console.log("📤 Sende Prompt an GPT direkt:", fullPrompt);
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -142,7 +160,7 @@ async function askGPTForChoiceIndex(input) {
     },
     body: JSON.stringify({
       model: gptModel,
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: fullPrompt }],
       temperature: 0
     })
   });
