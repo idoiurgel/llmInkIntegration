@@ -1,4 +1,4 @@
-VAR DEBUG = true
+# gptcontext: Du bist ein erfahrener Reiseführer, der den Spieler durch eine geheimnisvolle Welt begleitet. Du hilfst mit klugen, kurzen Entscheidungen in Form von Zahlen (z. B. 0 oder 1). Wenn du den Spieler nicht verstehst, fragst du nach.
 
 -> start
 
@@ -8,20 +8,15 @@ VAR DEBUG = true
 === kreuzung_1
 # gpt:on
 # choices:on
-# gptprompt: Du bist ein Reiseführer, der zwischen zwei Wegen helfen muss: Einer ist vertraut und sicher, der andere mystisch und unbekannt.
+# gptprompt: Du bist ein erfahrener Reiseführer. Hilf dem Spieler, sich zwischen Sicherheit (Dorf) und Abenteuer (Berg) zu entscheiden. Du bekommst die Information, welche die Optionen sind. Du antwortest mit einer Zahl, z.B. 0 oder 1, wenn du verstehst, welche Option am besten für der Nutzer ist. Wenn du nicht verstehst, fragst du nach.
 Du stehst an einer Kreuzung. Vor dir liegt ein nebliger Bergpfad, hinter dir das Dorf.
 
-{DEBUG:
-  * Gehe ins Dorf -> dorf_zurueck
-  * Geh den Berg hinauf -> berg_hoch
-- else:
-  -> DONE
-}
+* Gehe ins Dorf -> dorf_zurueck
+* Geh den Berg hinauf -> berg_hoch
 
 === dorf_zurueck
 # gpt:on
 # choices:on
-# gptprompt: Der Spieler hat sich für das Dorf entschieden. Wie geht er mit der Entscheidung um?
 Du drehst dich um und gehst zurück ins Dorf.
 
 -> geisterwald
@@ -29,7 +24,6 @@ Du drehst dich um und gehst zurück ins Dorf.
 === berg_hoch
 # gpt:on
 # choices:on
-# gptprompt: Der Spieler wählt den mystischen Pfad. Wie geht er mit Gefahr und Neugier um?
 Du wählst den Weg in den Nebel.
 
 -> geisterwald
@@ -37,35 +31,70 @@ Du wählst den Weg in den Nebel.
 === geisterwald
 # gpt:on
 # choices:on
-# gptprompt: Du betrittst einen geisterhaften Wald. Die Entscheidung zwischen Flucht oder Mut steht bevor.
+# gptprompt: Der Wald wirkt unheimlich. Du musst entscheiden, ob du deinen Mut sammelst oder dich lieber zurückziehst.
 Ein geisterhafter Wald liegt vor dir.
 
-{DEBUG:
-  * In den Wald -> wald_rein
-  * Weg vom Wald -> wald_weg
-- else:
-  -> DONE
-}
+* In den Wald -> wald_rein
+* Weg vom Wald -> wald_weg
 
 === wald_rein
 # gpt:on
-# choices:on
-# gptprompt: Der Spieler geht mutig in den Wald. Beschreibe diese Entscheidung.
-Du trittst in den dunklen Wald.
+# choices:off
+# gptprompt: Du betrittst den dunklen Wald. Was willst du tun – leise voranschleichen oder laut deinen Namen rufen?
+Die Äste knacken unter deinen Füßen. Es ist still. Zu still.
 
--> ende
+-> tempel_odyssee
 
 === wald_weg
-# gpt:on
+# gpt:off
 # choices:on
-# gptprompt: Der Spieler zieht sich zurück. Vielleicht war es zu viel?
 Du weichst zurück vom Wald.
 
--> ende
+* Zurück zur Kreuzung -> kreuzung_1
 
-=== ende
+=== tempel_odyssee
+# gpt:on
+# choices:on
+# gptprompt: Du stehst nun vor zwei Wegen: Einer führt in einen alten Tempel, der andere tiefer in die Wildnis. Was ist weiser?
+Ein verfallener Tempel liegt links, rechts ein Trampelpfad ins Dickicht.
+
+* Tempel betreten -> tempel_betreten
+* Pfad folgen -> tiefer_wald
+
+=== tempel_betreten
+# gpt:off
+# choices:on
+Du schiebst das schwere Steintor auf.
+
+* Weiter → -> finale
+* Zurück → -> geisterwald
+
+=== tiefer_wald
+# gpt:on
+# choices:on
+# gptprompt: Du bist nun tief in der Wildnis. Der Spieler fühlt sich beobachtet. Soll er sich verstecken oder laut um Hilfe rufen?
+Büsche rascheln. Augen starren dich aus dem Dunkel an.
+
+* Verstecken -> verstecken
+* Rufen -> rufen
+
+=== verstecken
 # gpt:off
 # choices:off
-Dein Weg geht weiter...
+Du kauerst dich ins Unterholz. Alles wird still.
+
+-> finale
+
+=== rufen
+# gpt:off
+# choices:off
+Dein Ruf hallt durch die Bäume – keine Antwort.
+
+-> finale
+
+=== finale
+# gpt:off
+# choices:off
+Ein Licht erscheint am Horizont. Dein Abenteuer endet hier – für den Moment.
 
 -> END

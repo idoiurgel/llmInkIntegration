@@ -1,16 +1,25 @@
-// main.js (GPT + Ink Hybrid mit Choice-Matching via Proxy)
+// main.js (GPT + Ink Hybrid mit direktem API-Key aus apikey.txt)
 
 let story;
 let currentGptNode = null;
 let gptEnabled = true;
 let inkChoicesEnabled = true;
 let currentGptPromptHint = "";
+let openaiApiKey = ""; // wird geladen aus apikey.txt
+const gptModel = "gpt-4-turbo";
+
+// Lade API-Key aus externer Datei
+fetch("apikey.txt")
+  .then(res => res.text())
+  .then(key => {
+    openaiApiKey = key.trim();
+    console.log("🔑 OpenAI API-Key geladen.");
+  });
 
 fetch('story.json')
   .then(response => response.json())
   .then(json => {
     story = new inkjs.Story(json);
-    story.variablesState["DEBUG"] = true;
     continueStory();
   });
 
@@ -102,18 +111,19 @@ async function handleUserInput() {
   console.log("📨 Benutzereingabe:", input);
   document.getElementById("userInput").value = "";
 
-  const index = await askGPTForChoiceIndex(input);
-  console.log("🧠 GPT gewählter Choice-Index:", index);
+  const result = await askGPTForChoiceIndex(input);
+  console.log("🧠 GPT Ergebnis:", result);
 
-  if (index !== null && !isNaN(index)) {
-    story.ChooseChoiceIndex(index);
+  if (result.index !== null && !isNaN(result.index)) {
+    story.ChooseChoiceIndex(result.index);
     removeAll(".choice");
     removeElement("userInputArea");
     continueStory();
   } else {
     const p = document.createElement("p");
-    p.textContent = "GPT konnte deine Eingabe nicht zuordnen.";
+    p.textContent = result.rawResponse || "GPT konnte deine Eingabe nicht zuordnen.";
     document.getElementById("story").appendChild(p);
+    showGptInput(); // neues Eingabefeld unterhalb
   }
 }
 
@@ -122,16 +132,18 @@ async function askGPTForChoiceIndex(input) {
 
   const prompt = `${currentGptPromptHint}\n\nDer Spieler sagt: "${input}"\n\nHier sind die Optionen:\n${choices}\n\nWähle die passende Zahl.`;
 
-  console.log("📤 Sende Prompt an GPT (via Proxy):", prompt);
+  console.log("📤 Sende Prompt an GPT direkt:", prompt);
 
-  const res = await fetch(
-    "https://openapi-back.onrender.com/ask", {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${openaiApiKey}`
     },
     body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }]
+      model: gptModel,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0
     })
   });
 
@@ -142,7 +154,10 @@ async function askGPTForChoiceIndex(input) {
   console.log('✅ GPT Antwort (bereinigt):', response);
   const number = parseInt(response);
 
-  return isNaN(number) ? null : number;
+  return {
+    index: isNaN(number) ? null : number,
+    rawResponse: response
+  };
 }
 
 function removeAll(selector) {
@@ -154,3 +169,4 @@ function removeElement(id) {
   const el = document.getElementById(id);
   if (el) el.remove();
 }
+
